@@ -19,3 +19,125 @@
             </ul>
         </nav>
     </header>
+<body>
+    <h1>Solar-Powered Chilled Water System Savings Calculator</h1>
+    <p>This calculator estimates the energy and cost savings from replacing your existing commercial AC system with a solar-powered chilled water system. The new system uses solar power for the compressor and heat rejection equipment (which typically account for 70-90% of energy use) and stores cold in insulated water tanks for efficient operation.</p>
+    
+    <form id="calculatorForm">
+        <div class="section">
+            <h2>Existing AC System Details</h2>
+            <label for="annualEnergy">Annual Energy Consumption (kWh):</label>
+            <input type="number" id="annualEnergy" required min="0" placeholder="e.g., 100000">
+            
+            <label for="electricityCost">Electricity Cost per kWh ($):</label>
+            <input type="number" id="electricityCost" required min="0" step="0.01" placeholder="e.g., 0.12">
+            
+            <label for="energyFraction">Percentage of Energy for Compressor + Heat Rejection (%):</label>
+            <input type="number" id="energyFraction" required min="70" max="90" value="80" placeholder="Typically 70-90%">
+        </div>
+        
+        <div class="section">
+            <h2>New System Details</h2>
+            <label for="systemCost">Installation Cost of New System ($):</label>
+            <input type="number" id="systemCost" required min="0" placeholder="e.g., 50000">
+            
+            <label for="incentives">Government Incentives or Rebates ($):</label>
+            <input type="number" id="incentives" min="0" placeholder="e.g., 10000" value="0">
+            
+            <label for="maintenanceSavings">Annual Maintenance Savings ($):</label>
+            <input type="number" id="maintenanceSavings" min="0" placeholder="e.g., 2000" value="0">
+            
+            <label for="lifespan">Expected System Lifespan (years):</label>
+            <input type="number" id="lifespan" required min="1" value="20">
+        </div>
+        
+        <div class="section">
+            <h2>Finance Section</h2>
+            <label for="loanAmount">Loan Amount (if financing, $):</label>
+            <input type="number" id="loanAmount" min="0" placeholder="e.g., 40000" value="0">
+            
+            <label for="interestRate">Annual Interest Rate (%):</label>
+            <input type="number" id="interestRate" min="0" step="0.1" placeholder="e.g., 5" value="0">
+            
+            <label for="loanTerm">Loan Term (years):</label>
+            <input type="number" id="loanTerm" min="0" placeholder="e.g., 10" value="0">
+        </div>
+        
+        <button type="submit">Calculate Savings</button>
+    </form>
+    
+    <div id="results" style="display: none;">
+        <h2>Results</h2>
+        <p><strong>Annual Energy Savings (kWh):</strong> <span id="energySavings"></span></p>
+        <p><strong>Annual Cost Savings ($):</strong> <span id="costSavings"></span> (including maintenance)</p>
+        <p><strong>Net Installation Cost ($):</strong> <span id="netCost"></span> (after incentives)</p>
+        <p><strong>Payback Period (years):</strong> <span id="payback"></span></p>
+        <p><strong>Total Savings Over Lifespan ($):</strong> <span id="totalSavings"></span></p>
+        <p><strong>Return on Investment (ROI %):</strong> <span id="roi"></span></p>
+        
+        <div id="financeResults" style="display: none;">
+            <h3>Finance Details</h3>
+            <p><strong>Monthly Loan Payment ($):</strong> <span id="monthlyPayment"></span></p>
+            <p><strong>Total Loan Payments ($):</strong> <span id="totalPayments"></span></p>
+            <p><strong>Net Savings After Loan ($):</strong> <span id="netSavingsAfterLoan"></span></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('calculatorForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get input values
+            const annualEnergy = parseFloat(document.getElementById('annualEnergy').value);
+            const electricityCost = parseFloat(document.getElementById('electricityCost').value);
+            const energyFraction = parseFloat(document.getElementById('energyFraction').value) / 100;
+            const systemCost = parseFloat(document.getElementById('systemCost').value);
+            const incentives = parseFloat(document.getElementById('incentives').value) || 0;
+            const maintenanceSavings = parseFloat(document.getElementById('maintenanceSavings').value) || 0;
+            const lifespan = parseInt(document.getElementById('lifespan').value);
+            const loanAmount = parseFloat(document.getElementById('loanAmount').value) || 0;
+            const interestRate = parseFloat(document.getElementById('interestRate').value) / 100 || 0;
+            const loanTerm = parseInt(document.getElementById('loanTerm').value) || 0;
+            
+            // Calculations
+            const energySavings = annualEnergy * energyFraction; // kWh saved
+            const costSavings = (energySavings * electricityCost) + maintenanceSavings; // Annual $ savings
+            
+            const netCost = systemCost - incentives;
+            const payback = netCost / costSavings;
+            const totalSavings = (costSavings * lifespan) - netCost;
+            const roi = (totalSavings / netCost) * 100;
+            
+            // Finance calculations (using PMT formula for monthly payment)
+            let monthlyPayment = 0;
+            let totalPayments = 0;
+            let netSavingsAfterLoan = 0;
+            if (loanAmount > 0 && interestRate > 0 && loanTerm > 0) {
+                const monthlyRate = interestRate / 12;
+                const numPayments = loanTerm * 12;
+                monthlyPayment = (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / (Math.pow(1 + monthlyRate, numPayments) - 1);
+                totalPayments = monthlyPayment * numPayments;
+                netSavingsAfterLoan = totalSavings - (totalPayments - loanAmount); // Subtract interest paid
+                document.getElementById('financeResults').style.display = 'block';
+            } else {
+                document.getElementById('financeResults').style.display = 'none';
+            }
+            
+            // Display results
+            document.getElementById('energySavings').textContent = energySavings.toFixed(0);
+            document.getElementById('costSavings').textContent = costSavings.toFixed(2);
+            document.getElementById('netCost').textContent = netCost.toFixed(2);
+            document.getElementById('payback').textContent = payback.toFixed(1);
+            document.getElementById('totalSavings').textContent = totalSavings.toFixed(2);
+            document.getElementById('roi').textContent = roi.toFixed(1);
+            
+            if (loanAmount > 0) {
+                document.getElementById('monthlyPayment').textContent = monthlyPayment.toFixed(2);
+                document.getElementById('totalPayments').textContent = totalPayments.toFixed(2);
+                document.getElementById('netSavingsAfterLoan').textContent = netSavingsAfterLoan.toFixed(2);
+            }
+            
+            document.getElementById('results').style.display = 'block';
+        });
+    </script>
+</body>
